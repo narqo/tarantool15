@@ -1,0 +1,54 @@
+
+const (
+	PrivateTokenFieldEmail = 0
+	PrivateTokenFieldType  = 1
+)
+
+var _ tarantool.PackerTo = (*privateToken)(nil)
+
+func (v privateToken) PackTo(data []byte) []byte {
+	data = tarantool.PackUint32(data, 2) // count fields
+	data = tarantool.PackTupleFieldString(data, v.Email)
+	data = tarantool.PackTupleFieldString(data, v.Type)
+	return data
+}
+
+func (v *privateToken) PackTuple() tnt.Tuple {
+	var idx [2]int
+	data := make([]byte, 0, 256)
+	data = tarantool.PackString(data, v.Email)
+	idx[0] = len(v.Email)
+	data = tarantool.PackString(data, v.Type)
+	idx[1] = len(v.Type)
+
+	ret := make(tnt.Tuple, 2)
+	var left int
+	for i, n := range idx {
+		if n == 0 {
+			continue
+		}
+		ret[i] = data[left : left+n]
+		left += n
+	}
+	return ret
+}
+
+func (v *privateToken) UnpackTuple(tuple tnt.Tuple) (err error) {
+	var data []byte
+	for fid := 0; fid < len(tuple); fid++ {
+		data = tuple[fid]
+		switch fid {
+		case 0:
+			v.Email, err = tarantool.UnpackString(data)
+			if err != nil {
+				return err
+			}
+		case 1:
+			v.Type, err = tarantool.UnpackString(data)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return
+}

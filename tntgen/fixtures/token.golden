@@ -1,0 +1,210 @@
+
+const (
+	TokenFieldEmail        = 0
+	TokenFieldType         = 1
+	TokenFieldAppID        = 2
+	TokenFieldCreatedAt    = 3
+	TokenFieldExpiresAt    = 4
+	TokenFieldToken        = 5
+	TokenFieldRefreshToken = 6
+	TokenFieldData         = 7
+	TokenFieldRawStatus    = 8
+	TokenFieldValidTill    = 9
+)
+
+var _ tarantool.PackerTo = (*Token)(nil)
+
+func (v Token) PackTo(data []byte) []byte {
+	data = tarantool.PackUint32(data, 10) // count fields
+	data = tarantool.PackTupleFieldString(data, v.Email)
+	data = tarantool.PackTupleFieldUint32(data, uint32(v.Type))
+	data = tarantool.PackTupleFieldUint64(data, uint64(v.AppID))
+	if !v.CreatedAt.IsZero() {
+		data = tarantool.PackTupleFieldUint32(data, uint32(v.CreatedAt.Unix()))
+	} else {
+		data = tarantool.PackTupleFieldUint32(data, 0)
+	}
+	if !v.ExpiresAt.IsZero() {
+		data = tarantool.PackTupleFieldUint32(data, uint32(v.ExpiresAt.Unix()))
+	} else {
+		data = tarantool.PackTupleFieldUint32(data, 0)
+	}
+	data = tarantool.PackTupleFieldString(data, v.Token)
+	data = tarantool.PackTupleFieldString(data, v.RefreshToken)
+	data = tarantool.PackTupleFieldBytes(data, v.Data)
+	data = tarantool.PackTupleFieldBytes(data, v.RawStatus)
+	if !v.ValidTill.IsZero() {
+		data = tarantool.PackTupleFieldUint32(data, uint32(v.ValidTill.Unix()))
+	} else {
+		data = tarantool.PackTupleFieldUint32(data, 0)
+	}
+	return data
+}
+
+func (v *Token) PackTuple() tnt.Tuple {
+	var idx [10]int
+	data := make([]byte, 0, 256)
+	data = tarantool.PackString(data, v.Email)
+	idx[0] = len(v.Email)
+	data = tarantool.PackUint32(data, v.Type)
+	idx[1] = 4
+	data = tarantool.PackUint64(data, uint64(v.AppID))
+	idx[2] = 8
+	if !v.CreatedAt.IsZero() {
+		data = tarantool.PackUint32(data, uint32(v.CreatedAt.Unix()))
+	}
+	idx[3] = 4
+	if !v.ExpiresAt.IsZero() {
+		data = tarantool.PackUint32(data, uint32(v.ExpiresAt.Unix()))
+	}
+	idx[4] = 4
+	data = tarantool.PackString(data, v.Token)
+	idx[5] = len(v.Token)
+	data = tarantool.PackString(data, v.RefreshToken)
+	idx[6] = len(v.RefreshToken)
+	data = tarantool.PackRawBytes(data, v.Data)
+	idx[7] = len(v.Data)
+	data = tarantool.PackRawBytes(data, v.RawStatus)
+	idx[8] = len(v.RawStatus)
+	if !v.ValidTill.IsZero() {
+		data = tarantool.PackUint32(data, uint32(v.ValidTill.Unix()))
+	}
+	idx[9] = 4
+
+	ret := make(tnt.Tuple, 10)
+	var left int
+	for i, n := range idx {
+		if n == 0 {
+			continue
+		}
+		ret[i] = data[left : left+n]
+		left += n
+	}
+	return ret
+}
+
+func (v *Token) UnpackTuple(tuple tnt.Tuple) (err error) {
+	var data []byte
+	for fid := 0; fid < len(tuple); fid++ {
+		data = tuple[fid]
+		switch fid {
+		case 0:
+			v.Email, err = tarantool.UnpackString(data)
+			if err != nil {
+				return err
+			}
+		case 1:
+			var v1 uint64
+			v1, err = tarantool.UnpackUint(data)
+			if err != nil {
+				return err
+			}
+			v.Type = uint32(v1)
+		case 2:
+			var v1 uint64
+			v1, err = tarantool.UnpackUint(data)
+			if err != nil {
+				return err
+			}
+			v.AppID = int64(v1)
+		case 3:
+			var v1 uint64
+			v1, err = tarantool.UnpackUint(data)
+			if err != nil {
+				return err
+			}
+			if v1 != 0 {
+				v.CreatedAt = time.Unix(int64(v1), 0)
+			}
+		case 4:
+			var v1 uint64
+			v1, err = tarantool.UnpackUint(data)
+			if err != nil {
+				return err
+			}
+			if v1 != 0 {
+				v.ExpiresAt = time.Unix(int64(v1), 0)
+			}
+		case 5:
+			v.Token, err = tarantool.UnpackString(data)
+			if err != nil {
+				return err
+			}
+		case 6:
+			v.RefreshToken, err = tarantool.UnpackString(data)
+			if err != nil {
+				return err
+			}
+		case 7:
+			v.Data = data
+		case 8:
+			v.RawStatus = data
+		case 9:
+			var v1 uint64
+			v1, err = tarantool.UnpackUint(data)
+			if err != nil {
+				return err
+			}
+			if v1 != 0 {
+				v.ValidTill = time.Unix(int64(v1), 0)
+			}
+		}
+	}
+	return
+}
+
+const (
+	ServiceFieldID   = 0
+	ServiceFieldName = 1
+)
+
+var _ tarantool.PackerTo = (*Service)(nil)
+
+func (v Service) PackTo(data []byte) []byte {
+	data = tarantool.PackUint32(data, 2) // count fields
+	data = tarantool.PackTupleFieldUint32(data, uint32(v.ID))
+	data = tarantool.PackTupleFieldString(data, v.Name)
+	return data
+}
+
+func (v *Service) PackTuple() tnt.Tuple {
+	var idx [2]int
+	data := make([]byte, 0, 256)
+	data = tarantool.PackUint32(data, v.ID)
+	idx[0] = 4
+	data = tarantool.PackString(data, v.Name)
+	idx[1] = len(v.Name)
+
+	ret := make(tnt.Tuple, 2)
+	var left int
+	for i, n := range idx {
+		if n == 0 {
+			continue
+		}
+		ret[i] = data[left : left+n]
+		left += n
+	}
+	return ret
+}
+
+func (v *Service) UnpackTuple(tuple tnt.Tuple) (err error) {
+	var data []byte
+	for fid := 0; fid < len(tuple); fid++ {
+		data = tuple[fid]
+		switch fid {
+		case 0:
+			var v1 uint64
+			v1, err = tarantool.UnpackUint(data)
+			if err != nil {
+				return err
+			}
+			v.ID = uint32(v1)
+		case 1:
+			v.Name, err = tarantool.UnpackString(data)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return
+}
